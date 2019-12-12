@@ -1,0 +1,26 @@
+ARG DERIVED_IMAGE
+FROM ${DERIVED_IMAGE}
+
+RUN mkdir -p /etc/passwd /etc/pam.d /opt/spark/conf /opt/spark/work-dir
+
+RUN set -ex && \
+    rm /bin/sh && \
+    ln -sv /bin/bash /bin/sh && \
+    touch /etc/pam.d/su \
+    echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su && \
+    chgrp root /etc/passwd && chmod ug+rw /etc/passwd
+
+RUN ln -s /usr/share/apache-spark/jars/ /opt/spark/ && \
+    ln -s /usr/share/apache-spark/bin/ /opt/spark/ && \
+    ln -s /usr/share/apache-spark/sbin/ /opt/spark/ && \
+    ln -s /usr/share/apache-spark/examples/ /opt/spark/ && \
+    ln -s /usr/share/apache-spark/kubernetes/tests/ /opt/spark/ && \
+    ln -s /usr/share/apache-spark/data/ /opt/spark/ && \
+    ln -s /etc/spark/* /opt/spark/conf/
+
+COPY entrypoint.sh /opt/
+ENV JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+ENV SPARK_HOME /opt/spark
+WORKDIR /opt/spark/work-dir
+ENTRYPOINT [ "/opt/entrypoint.sh" ]
